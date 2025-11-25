@@ -1,10 +1,10 @@
 # NixOS Docker Compose Module
 
-A simple and robust NixOS module to declaratively manage Docker Compose services.
+NixOS module to manage Docker Compose services.
 
 Using this module, installing a service through a Docker Compose file is as easy as pointing to its directory with `dockerComposeServices.composeDirs` from your `configuration.nix`.
 
-Everything alongside the compose file will also be copied and installed, and if any of those files change or the machine reboots, the services will be restarted.
+Everything alongside the compose file will also be copied and installed, even `build` with a `Dockerfile` works.
 
 ## Usage
 
@@ -54,27 +54,16 @@ Then, in your `configuration.nix`, use the `dockerComposeServices.composeDirs` o
 }
 ```
 
-### User Configuration
+### Config options
 
-By default, the systemd services that manage your Docker Compose projects run as root. You can change this by setting the `dockerComposeServices.user` option.
+By default, the systemd services that manage your Docker Compose projects run as `root`. You can change this by setting the `dockerComposeServices.user` option, make sure the user you select has the `docker` group.
 
-## How It Works
-
-This module creates systemd services that gracefully handle `nixos-rebuild switch` by using stable project names and properly managing the `up` and `down` lifecycle. For each directory provided, the module creates a systemd service with the following behavior:
-
-- **`ExecStart`**: Runs `docker compose -p <dir-name> up -d --remove-orphans`.
-- **`ExecStop`**: Runs `docker compose -p <dir-name> down`.
-- **Stable Project Name**: Uses the `-p` flag with the directory's base name to ensure containers can be found and managed correctly across rebuilds.
-- **Graceful Rebuilds**: When you run `nixos-rebuild switch`, systemd stops the old service (running `down`) before starting the new one (running `up`).
+No other configuration options are provided at the moment.
 
 ## Comparison with `compose2nix`
 
-While [`compose2nix`](https://github.com/aksiksi/compose2nix) (and similar tools like `nix-docker-compose` or `podman-compose-to-nix`) aim to convert your `docker-compose.yml` (or `compose.yml`) files into Nix derivations for building OCI images and managing containers, this module offers a different approach. This module focuses on declaratively managing the lifecycle of your Docker Compose projects as systemd services.
+While [`compose2nix`](https://github.com/aksiksi/compose2nix) aim to convert your `docker-compose.yml` files into Nix derivations of OCI containers, this instead just allows you to drop your existing `docker-compose.yml` and whatever `Dockerfile` or other config files you have.
 
-It achieves this by directly invoking the `docker compose` binary. In contrast, `compose2nix` translates your compose file into Nix derivations, allowing Nix to build OCI images and define container configurations within the Nix store.
+The idea is, by not converting your `docker-compose.yml` files to a new format, we avoid "Nix lock-in" and keep our configs portable with other platforms, like Docker Desktop.
 
-A key benefit of this module is its simplicity and integration with existing workflows. It minimizes complexity and avoids "Nix lock-in" by not converting your `docker-compose.yml` files to a new format.
-
-This makes it ideal if you prefer to keep your compose files as they are and simply need a robust NixOS-native way to manage their startup, shutdown, and graceful restarts via systemd.
-
-Unlike compose2nix, this module does not build Docker images within the Nix store. It assumes your images are either pulled from a remote registry or built through other external means (for example, using `pkgs.dockerTools.buildImage` as a separate Nix derivation).
+This makes it ideal if you prefer to keep your compose files as-is, and simply need a robust NixOS-native way to manage their declaration.
