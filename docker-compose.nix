@@ -53,10 +53,10 @@
 
               # Command to run when the service starts.
               # The -p flag provides a stable project name, which is critical for rebuilds.
-              ExecStart = "${pkgs.docker-compose}/bin/docker compose -p ${entry.name} up -d --remove-orphans";
+              ExecStart = "${pkgs.docker}/bin/docker compose -p ${entry.name} up -d --remove-orphans";
 
               # Command to run when the service stops (e.g., during a nixos-rebuild).
-              ExecStop = "${pkgs.docker-compose}/bin/docker compose -p ${entry.name} down";
+              ExecStop = "${pkgs.docker}/bin/docker compose -p ${entry.name} down";
             };
 
             # This ensures that if the service definition changes, systemd stops the old
